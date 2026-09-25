@@ -78,6 +78,14 @@ MuToolsProject/
 └── build.bat                    # 构建脚本
 ```
 
+## 构建安装包
+
+MuTools 是 Tauri v2 应用，正式安装包为 Windows 平台产物（NSIS `.exe` / MSI `.msi`），需在 Windows 环境构建。
+
+- **一键构建**：项目根目录运行 `build-installer.cmd`（或 `build-installer.ps1`），自动完成环境检查与打包；
+- **CI 自动构建**：推送 tag（如 `v1.1.0`）或在 Actions 页面手动触发 `Build Installer` 工作流，即可在 GitHub 上直接产出安装包；
+- **详细指南**：见 [`BUILD.md`](./BUILD.md)。
+
 ## 特别鸣谢
 
 晚安 | Razgriz | piedge

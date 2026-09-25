@@ -1,0 +1,72 @@
+# ============================================================
+#  MuTools 安装包自动构建工作流
+#  触发方式:
+#    1) 推送 tag:  git push origin v1.1.0   (同时发布 GitHub Release)
+#    2) 手动触发: 仓库 Actions 页面 -> "Build Installer" -> Run workflow
+#  产物:
+#    - NSIS 安装包 (.exe)
+#    - MSI  安装包 (.msi)
+# ============================================================
+name: Build Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: MuToolsCode/package-lock.json
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: MuToolsCode/src-tauri
+
+      - name: Install frontend dependencies
+        working-directory: MuToolsCode
+        run: npm ci --no-audit --no-fund
+
+      - name: Build NSIS + MSI installers
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: MuToolsCode
+          # 仅打 tag 时创建 Draft Release；手动触发时只产出安装包 artifact
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('MuTools {0}', github.ref_name) || '' }}
+          releaseBody: |
+            自动构建的 MuTools 安装包：
+            - NSIS 安装包 (.exe)：双击即可安装
+            - MSI 安装包 (.msi)：企业部署 / 组策略分发
+            使用前请阅读应用内免责声明。
+          releaseDraft: true
+          prerelease: false
+          args: --bundles nsis,msi
+
+      - name: Upload installers as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MuTools-installers-${{ github.ref_name || 'manual' }}
+          path: |
+            MuToolsCode/src-tauri/target/release/bundle/nsis/*.exe
+            MuToolsCode/src-tauri/target/release/bundle/msi/*.msi
+          if-no-files-found: error
