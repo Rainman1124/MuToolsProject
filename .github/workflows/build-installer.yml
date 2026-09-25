@@ -23,12 +23,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: MuToolsCode/package-lock.json
 
@@ -63,7 +63,7 @@ jobs:
           args: --bundles nsis,msi
 
       - name: Upload installers as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: MuTools-installers-${{ github.ref_name || 'manual' }}
           path: |
